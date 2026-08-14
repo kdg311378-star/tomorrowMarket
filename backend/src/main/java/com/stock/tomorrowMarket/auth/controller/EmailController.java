@@ -4,6 +4,7 @@ import com.stock.tomorrowMarket.auth.dto.EmailSendRequest;
 import com.stock.tomorrowMarket.auth.dto.EmailVerifyRequest;
 import com.stock.tomorrowMarket.auth.service.EmailService;
 import org.springframework.http.ResponseEntity;
+import com.stock.tomorrowMarket.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

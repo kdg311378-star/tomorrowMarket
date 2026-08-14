@@ -1,0 +1,20 @@
+package com.stock.tomorrowMarket.global.response;
+
+import lombok.Getter;
+
+@Getter
+public class ErrorResponse {
+    private final boolean success;
+    private final String code;
+    private final String message;
+
+    private ErrorResponse(String code, String message) {
+        this.success = false;
+        this.code = code;
+        this.message = message;
+    }
+
+    public static ErrorResponse of(String code, String message) {
+        return new ErrorResponse(code, message);
+    }
+}

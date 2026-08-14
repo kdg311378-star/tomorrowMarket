@@ -1,10 +1,52 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
 import "./LoginPage.css";
 import graphImg2 from "../assets/img/graph_2.png"; // 새로운 전체 배경 이미지
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    // 컴포넌트 마운트 시, 과거 방식의 목업 데이터 및 기존 토큰 찌꺼기 청소
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("isAuthenticated");
+    sessionStorage.removeItem("isAuthenticated");
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    
+    try {
+      const payload = { email, password, keepLoggedIn };
+      const response = await api.post("/auth/login", payload);
+      
+      if (response.data.success) {
+        // 토큰은 HttpOnly 쿠키로 관리되므로, 프론트엔드는 UI 상태용 플래그만 저장합니다.
+        if (keepLoggedIn) {
+          localStorage.setItem("isAuthenticated", "true");
+        } else {
+          sessionStorage.setItem("isAuthenticated", "true");
+        }
+        window.dispatchEvent(new Event("authChange"));
+        navigate("/home");
+      }
+    } catch (error: any) {
+      if (error.response && error.response.data && error.response.data.message) {
+        setErrorMsg(error.response.data.message);
+      } else {
+        setErrorMsg("로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.");
+      }
+    }
+  };
 
   return (
     <div className="login-page-container" style={{
@@ -82,12 +124,18 @@ function LoginPage() {
             내일장 계정으로 로그인하여 서비스를 이용하세요.
           </p>
 
-          <form onSubmit={(e) => { e.preventDefault(); navigate("/home"); }}>
+          <form onSubmit={handleLogin} autoComplete="off">
+            {/* 브라우저 자동완성 덮어쓰기 방지 트랩 */}
+            <input type="text" name="fake-email-trap" style={{ display: "none" }} aria-hidden="true" />
+            <input type="password" name="fake-pw-trap" style={{ display: "none" }} aria-hidden="true" />
+            
+            {errorMsg && <div style={{ color: "red", marginBottom: "15px", fontSize: "14px", fontWeight: "bold" }}>{errorMsg}</div>}
+            
             <div className="form-group">
               <label className="form-label">이메일</label>
               <div className="input-wrapper">
                 <span className="input-icon">✉</span>
-                <input type="email" className="login-input" placeholder="이메일 주소를 입력하세요" required />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="login-input" placeholder="이메일 주소를 입력하세요" required autoComplete="off" />
               </div>
             </div>
 
@@ -95,14 +143,14 @@ function LoginPage() {
               <label className="form-label">비밀번호</label>
               <div className="input-wrapper">
                 <span className="input-icon">🔒</span>
-                <input type="password" className="login-input" placeholder="비밀번호를 입력하세요" required />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="login-input" placeholder="비밀번호를 입력하세요" required autoComplete="current-password" />
                 <span style={{ position: "absolute", right: "16px", color: "#475569", cursor: "pointer" }}>👁</span>
               </div>
             </div>
 
             <div className="form-footer">
               <div className="checkbox-group">
-                <input type="checkbox" id="keep" style={{ width: "16px", height: "16px" }} />
+                <input type="checkbox" id="keep" checked={keepLoggedIn} onChange={(e) => setKeepLoggedIn(e.target.checked)} style={{ width: "16px", height: "16px" }} />
                 <label htmlFor="keep">로그인 상태 유지</label>
               </div>
               <div className="footer-links">
